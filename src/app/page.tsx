@@ -1,65 +1,48 @@
-import Image from "next/image";
+import Link from 'next/link';
+import { ArrowRight, Wallet, ShieldCheck, Zap, PieChart, Activity } from 'lucide-react';
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-[#0A0C10] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      
+      {/* Luces de fondo (Efecto Neo-Dark) */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[120px]"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-900/10 rounded-full blur-[120px]"></div>
+
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Badge superior */}
+        <div className="mb-6 px-4 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 backdrop-blur-md flex items-center gap-2">
+          <Activity size={14} className="text-emerald-400" />
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Sistema Financiero</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Icono Principal */}
+        <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 p-5 rounded-[2rem] mb-8 shadow-[0_0_50px_-12px_rgba(79,70,229,0.5)]">
+          <Wallet className="h-12 w-12 text-white" />
         </div>
-      </main>
+        
+        {/* Nombre de la App: Finanzas */}
+        <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter mb-6">
+          Finanzas<span className="text-indigo-500">.</span>
+        </h1>
+        
+
+        {/* Acciones */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-24 w-full max-w-md px-4">
+          <Link 
+            href="/dashboard" 
+            className="flex-1 bg-white text-black px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-slate-200 transition-all active:scale-95 shadow-[0_10px_20px_-10px_rgba(255,255,255,0.3)]"
+          >
+            IR <ArrowRight className="h-5 w-5" />
+          </Link>
+          
+        </div>
+
+      </div>
+
+      <footer className="absolute bottom-8 text-slate-600 text-[10px] font-bold uppercase tracking-[0.3em]">
+        © 2026 
+      </footer>
     </div>
   );
 }
