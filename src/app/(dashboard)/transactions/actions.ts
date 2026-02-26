@@ -3,10 +3,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-/**
- * FUNCIÓN: addTransaction
- * Registra el movimiento y actualiza saldos de Créditos o Ahorros automáticamente.
- */
 export async function addTransaction(formData: FormData): Promise<void> {
   const supabase = await createClient();
 
@@ -21,8 +17,7 @@ export async function addTransaction(formData: FormData): Promise<void> {
   let amount = amountRaw ? parseFloat(amountRaw as string) : 0;
   if (isNaN(amount) || amount === 0) return;
 
-  // El monto se guarda negativo si es un gasto, positivo si es un ingreso
-  // Importante: Los retiros de ahorros se consideran "gastos" del capital general
+  // Normalizar monto: negativo para gastos, positivo para ingresos
   amount = type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
 
   // 1. Inserción de la Transacción
@@ -38,36 +33,47 @@ export async function addTransaction(formData: FormData): Promise<void> {
         credit_id: destination === 'credit' ? credit_id : null,
     }]);
 
-  if (txError) {
-    console.error("Error en Transacción:", txError.message);
-    throw new Error(`Error en DB: ${txError.message}`);
-  }
+  if (txError) throw new Error(`Error en DB: ${txError.message}`);
 
-  // 2. ACTUALIZACIÓN AUTOMÁTICA DEL CRÉDITO
+  // 2. ACTUALIZACIÓN INTELIGENTE DEL CRÉDITO
   if (destination === 'credit' && credit_id) {
     const { data: credit } = await supabase
       .from('credits')
-      .select('remaining_amount, paid_installments')
+      .select('remaining_amount, paid_installments, installment_value, total_installments')
       .eq('id', credit_id)
       .single();
 
     if (credit) {
       const paymentAmount = Math.abs(amount); 
       const currentRemaining = Number(credit.remaining_amount) || 0;
+      const vCuota = Number(credit.installment_value) || 0;
+      
+      // Cálculo de nuevo saldo
       const newRemaining = Math.max(0, currentRemaining - paymentAmount);
+      
+      // LÓGICA DE CUOTAS: 
+      // Calculamos cuántas cuotas completas cubre este pago. 
+      // Si el pago es menor a una cuota, solo sumamos 1 si el saldo baja significativamente.
+      const cuotasPagadasEnEsteActo = vCuota > 0 ? Math.floor(paymentAmount / vCuota) : 1;
+      const totalPaidUpdated = (credit.paid_installments || 0) + (cuotasPagadasEnEsteActo || 1);
 
-      await supabase
-        .from('credits')
-        .update({ 
-          paid_installments: (credit.paid_installments || 0) + 1,
-          remaining_amount: newRemaining,
-          remaining_balance: newRemaining 
-        })
-        .eq('id', credit_id);
+      // Si el saldo llega a 0, lo eliminamos automáticamente
+      if (newRemaining <= 0) {
+        await supabase.from('credits').delete().eq('id', credit_id);
+      } else {
+        await supabase
+          .from('credits')
+          .update({ 
+            paid_installments: Math.min(totalPaidUpdated, credit.total_installments),
+            remaining_amount: newRemaining,
+            remaining_balance: newRemaining // Sincronizamos ambos campos
+          })
+          .eq('id', credit_id);
+      }
     }
   }
 
-  // 3. ACTUALIZACIÓN DE AHORROS (Depósitos y Retiros)
+  // 3. ACTUALIZACIÓN DE AHORROS
   if ((destination === 'saving' || destination === 'withdraw_saving') && saving_id) {
     const { data: saving } = await supabase
       .from('savings')
@@ -78,39 +84,34 @@ export async function addTransaction(formData: FormData): Promise<void> {
     if (saving) {
       const currentSaving = Number(saving.current_amount) || 0;
       const txAmount = Math.abs(amount);
-      
-      // LOGICA: Si es withdraw_saving RESTA del fondo, si es saving SUMA al fondo.
       const newAmount = destination === 'withdraw_saving' 
         ? currentSaving - txAmount 
         : currentSaving + txAmount;
 
       await supabase
         .from('savings')
-        .update({ current_amount: newAmount })
+        .update({ current_amount: Math.max(0, newAmount) })
         .eq('id', saving_id);
     }
   }
 
+  // Revalidación masiva para asegurar que todo el dashboard se actualice
   revalidatePath('/transactions');
   revalidatePath('/credits');
   revalidatePath('/savings');
   revalidatePath('/dashboard');
 }
 
-/**
- * FUNCIÓN: deleteTransaction
- * Elimina la transacción y revierte los saldos para mantener la integridad.
- */
 export async function deleteTransaction(id: string): Promise<void> {
   const supabase = await createClient();
 
-  const { data: tx, error: fetchError } = await supabase
+  const { data: tx } = await supabase
     .from('transactions')
     .select('*')
     .eq('id', id)
     .single();
 
-  if (fetchError || !tx) return;
+  if (!tx) return;
 
   const absAmount = Math.abs(tx.amount);
 
@@ -118,18 +119,22 @@ export async function deleteTransaction(id: string): Promise<void> {
   if (tx.destination === 'credit' && tx.credit_id) {
     const { data: credit } = await supabase
       .from('credits')
-      .select('remaining_amount, paid_installments')
+      .select('remaining_amount, paid_installments, installment_value')
       .eq('id', tx.credit_id)
       .single();
 
     if (credit) {
+      const vCuota = Number(credit.installment_value) || 0;
+      const cuotasARestar = vCuota > 0 ? Math.floor(absAmount / vCuota) : 1;
+      
       const restoredBalance = Number(credit.remaining_amount) + absAmount;
+      
       await supabase
         .from('credits')
         .update({
           remaining_amount: restoredBalance,
           remaining_balance: restoredBalance,
-          paid_installments: Math.max(0, (credit.paid_installments || 0) - 1)
+          paid_installments: Math.max(0, (credit.paid_installments || 0) - (cuotasARestar || 1))
         })
         .eq('id', tx.credit_id);
     }
@@ -145,9 +150,6 @@ export async function deleteTransaction(id: string): Promise<void> {
 
     if (saving) {
       const currentSaving = Number(saving.current_amount) || 0;
-      
-      // Si borro un retiro, el dinero debe VOLVER al fondo (+).
-      // Si borro un depósito, el dinero debe SALIR del fondo (-).
       const restoredAmount = tx.destination === 'withdraw_saving'
         ? currentSaving + absAmount
         : currentSaving - absAmount;
