@@ -59,87 +59,92 @@ export default async function CreditsPage() {
         </div>
       </section>
 
-      {/* 3. GRID DE CRÉDITOS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {credits && credits.length > 0 ? (
-          credits.map((item) => {
-            const totalCTC = Number(item.total_amount) || 0;
-            const vCuota = Number(item.installment_value) || 0;
-            const pCuotas = Number(item.paid_installments) || 0;
-            const tCuotas = Number(item.total_installments) || 1;
-            const saldoRestante = Number(item.remaining_amount) || 0;
-            const progress = Math.min(100, (pCuotas / tCuotas) * 100);
+{/* 3. GRID DE CRÉDITOS */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
+  {credits && credits.length > 0 ? (
+    credits.map((item) => {
+      const totalCTC = Number(item.total_amount) || 0;
+      const vCuota = Number(item.installment_value) || 0;
+      const pCuotas = Number(item.paid_installments) || 0;
+      const tCuotas = Number(item.total_installments) || 1;
+      const saldoRestante = Number(item.remaining_amount) || 0;
+      const progress = Math.min(100, (pCuotas / tCuotas) * 100);
 
-            return (
-              <div key={item.id} className="group p-8 bg-[#0A0C10] border border-white/5 rounded-[3rem] shadow-2xl relative overflow-hidden transition-all hover:border-rose-500/20 flex flex-col justify-between">
-                <div className="absolute -right-20 -top-20 w-48 h-48 bg-rose-500/5 blur-[70px] group-hover:bg-rose-500/10 transition-all duration-700" />
-                
-                <div className="relative z-10 mb-8">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-2xl md:text-3xl font-black text-white italic tracking-tight uppercase truncate max-w-[250px]">
-                        {item.name}
-                      </h3>
-                      <div className="flex flex-wrap gap-4 mt-3">
-                        <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                          <Calendar size={12} className="text-rose-500" /> {pCuotas} / {tCuotas} CUOTAS
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-black text-rose-500 uppercase tracking-widest bg-rose-500/5 px-3 py-1 rounded-full border border-rose-500/10">
-                          <PieChart size={12} /> {progress.toFixed(0)}% COMPLETADO
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-                      <span className="text-[9px] font-black text-slate-500 uppercase block mb-1 tracking-tighter">Mensualidad</span>
-                      <p className="text-2xl font-mono font-black text-white">
-                        ${vCuota.toLocaleString('es-CL')}
-                      </p>
-                    </div>
+      return (
+        <div key={item.id} className="group p-5 md:p-8 bg-[#0A0C10] border border-white/5 rounded-[2rem] md:rounded-[3rem] shadow-2xl relative overflow-hidden transition-all hover:border-rose-500/20 flex flex-col justify-between">
+          <div className="absolute -right-20 -top-20 w-48 h-48 bg-rose-500/5 blur-[70px] group-hover:bg-rose-500/10 transition-all duration-700" />
+          
+          <div className="relative z-10 mb-6 md:mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div className="space-y-3 w-full sm:w-auto">
+                <h3 className="text-xl md:text-3xl font-black text-white italic tracking-tight uppercase truncate leading-tight">
+                  {item.name}
+                </h3>
+                {/* Badges: Flex-wrap para que no se corten en pantallas pequeñas */}
+                <div className="flex flex-wrap gap-2 md:gap-4">
+                  <div className="flex items-center gap-1.5 text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
+                    <Calendar size={10} className="text-rose-500" /> {pCuotas} / {tCuotas} CUOTAS
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 md:gap-6 mb-8 relative z-10">
-                  <div className="p-5 rounded-[2rem] bg-slate-950 border border-white/5">
-                    <span className="text-[9px] font-black text-slate-600 uppercase block mb-2 tracking-widest">Carga Total</span>
-                    <span className="text-lg md:text-xl font-mono font-black text-slate-400">
-                      ${totalCTC.toLocaleString('es-CL')}
-                    </span>
-                  </div>
-                  <div className="p-5 rounded-[2rem] bg-rose-950/20 border border-rose-500/20">
-                    <span className="text-[9px] font-black text-rose-500 uppercase block mb-2 tracking-widest">Saldo Restante</span>
-                    <span className="text-lg md:text-xl font-mono font-black text-rose-500">
-                      ${saldoRestante.toLocaleString('es-CL')}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Barra de Progreso de Amortización */}
-                <div className="space-y-4 relative z-10">
-                  <div className="flex justify-between items-end">
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em]">Amortización</span>
-                    <span className="text-xs font-mono font-black text-rose-400">{progress.toFixed(1)}%</span>
-                  </div>
-                  <div className="relative w-full h-5 bg-slate-900 rounded-full border border-white/5 overflow-hidden p-[3px]">
-                    <div 
-                      className="h-full rounded-full bg-gradient-to-r from-rose-800 via-rose-600 to-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.4)] transition-all duration-1000 ease-out"
-                      style={{ width: `${progress}%` }}
-                    />
+                  <div className="flex items-center gap-1.5 text-[8px] md:text-[10px] font-black text-rose-500 uppercase tracking-widest bg-rose-500/5 px-2.5 py-1 rounded-full border border-rose-500/10">
+                    <PieChart size={10} /> {progress.toFixed(0)}%
                   </div>
                 </div>
               </div>
-            );
-          })
-        ) : (
-          <div className="col-span-full p-24 text-center border-2 border-dashed border-slate-800 rounded-[3.5rem] bg-slate-950/20">
-            <div className="inline-flex p-6 bg-slate-900 rounded-full text-slate-700 mb-6 border border-white/5">
-              <ArrowDownCircle size={48} className="opacity-20" />
+
+              {/* Mensualidad: Ocupa el ancho completo en móvil para que no se vea apretado */}
+              <div className="w-full sm:w-auto text-left sm:text-right bg-slate-900/50 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5">
+                <span className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase block mb-1 tracking-tighter">Mensualidad</span>
+                <p className="text-xl md:text-2xl font-mono font-black text-white leading-none">
+                  ${vCuota.toLocaleString('es-CL')}
+                </p>
+              </div>
             </div>
-            <p className="text-slate-500 italic font-black uppercase tracking-[0.3em] text-sm">
-              Libre de pasivos externos detectados
-            </p>
           </div>
-        )}
+
+          {/* Cargas: Grid que siempre mantiene 2 columnas pero con padding ajustado */}
+          <div className="grid grid-cols-2 gap-3 md:gap-6 mb-6 md:mb-8 relative z-10">
+            <div className="p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] bg-slate-950 border border-white/5">
+              <span className="text-[8px] md:text-[9px] font-black text-slate-600 uppercase block mb-1 md:mb-2 tracking-widest">Carga Total</span>
+              <span className="text-sm md:text-xl font-mono font-black text-slate-400 block truncate">
+                ${totalCTC.toLocaleString('es-CL')}
+              </span>
+            </div>
+            <div className="p-4 md:p-5 rounded-[1.5rem] md:rounded-[2rem] bg-rose-950/20 border border-rose-500/20">
+              <span className="text-[8px] md:text-[9px] font-black text-rose-500 uppercase block mb-1 md:mb-2 tracking-widest">Saldo</span>
+              <span className="text-sm md:text-xl font-mono font-black text-rose-500 block truncate">
+                ${saldoRestante.toLocaleString('es-CL')}
+              </span>
+            </div>
+          </div>
+
+          {/* Barra de Progreso: Ajustada para ser más delgada en móvil */}
+          <div className="space-y-3 relative z-10">
+            <div className="flex justify-between items-end">
+              <span className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em]">Amortización</span>
+              <span className="text-[10px] md:text-xs font-mono font-black text-rose-400">{progress.toFixed(1)}%</span>
+            </div>
+            <div className="relative w-full h-3 md:h-5 bg-slate-900 rounded-full border border-white/5 overflow-hidden p-[2px] md:p-[3px]">
+              <div 
+                className="h-full rounded-full bg-gradient-to-r from-rose-800 via-rose-600 to-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.3)] transition-all duration-1000 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    })
+  ) : (
+    /* Estado Vacío: Optimizado para móvil */
+    <div className="col-span-full p-12 md:p-24 text-center border-2 border-dashed border-slate-800 rounded-[2rem] md:rounded-[3.5rem] bg-slate-950/20">
+      <div className="inline-flex p-4 md:p-6 bg-slate-900 rounded-full text-slate-700 mb-6 border border-white/5">
+        <ArrowDownCircle size={32} className="opacity-20 md:size-12" />
       </div>
+      <p className="text-slate-500 italic font-black uppercase tracking-[0.2em] text-xs md:text-sm">
+        Libre de pasivos detectados
+      </p>
+    </div>
+  )}
+</div>
     </div>
   );
 }
